@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<title>Kompass — Editorial</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Kompass" />
+<meta name="theme-color" content="#EFEAE1" />
+<meta name="description" content="Persönlicher Profil- und Karriere-Kompass" />
+
+<!-- PWA manifest -->
+<link rel="manifest" href="manifest.json" />
+
+<!-- Font stack:
+     Bricolage Grotesque — display + body (variable, editorial character)
+     Instrument Serif   — italic accent
+     JetBrains Mono     — meta, numerics, labels                 -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<!-- Icons (PNG, exported from Canva Pro) -->
+<link rel="apple-touch-icon" href="icon-192.png" />
+<link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png" />
+
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div id="app">
+  <section class="screen active" data-screen="home" id="screen-home"></section>
+  <section class="screen" data-screen="module" id="screen-module"></section>
+  <section class="screen" data-screen="search" id="screen-search"></section>
+  <section class="screen" data-screen="settings" id="screen-settings"></section>
+</div>
+
+<nav class="tabs" role="tablist">
+  <div class="tabs-inner">
+    <button class="tab active" data-tab="home" aria-label="Start">
+      <span class="tab-icon" data-icon="home"></span>
+      <span class="tab-label">Start</span>
+    </button>
+    <button class="tab" data-tab="module" aria-label="Module">
+      <span class="tab-icon" data-icon="layers"></span>
+      <span class="tab-label">Module</span>
+    </button>
+    <button class="tab" data-tab="search" aria-label="Suche">
+      <span class="tab-icon" data-icon="search"></span>
+      <span class="tab-label">Suche</span>
+    </button>
+    <button class="tab" data-tab="settings" aria-label="System">
+      <span class="tab-icon" data-icon="settings"></span>
+      <span class="tab-label">System</span>
+    </button>
+  </div>
+</nav>
+
+<div class="onboard" id="onboard" style="display:none;"></div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+
+<!-- Service Worker registration (PWA / offline) -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {
+        /* SW registration failed — app still works, just no offline cache */
+      });
+    });
+  }
+</script>
+</body>
+</html>

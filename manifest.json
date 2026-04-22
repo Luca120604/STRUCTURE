@@ -1,0 +1,26 @@
+{
+  "name": "Kompass — Editorial",
+  "short_name": "Kompass",
+  "description": "Persönlicher Profil- und Karriere-Kompass. Editorial-Stil, offline-fähig.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#EFEAE1",
+  "background_color": "#000000",
+  "lang": "de",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
