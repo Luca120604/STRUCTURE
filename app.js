@@ -10,12 +10,13 @@
      ---------------------------------------------------------------------- */
   const LS_KEYS = {
     theme:    'kompass.theme',
-    onboard:  'kompass.onboard.v2',
+    onboard:  'kompass.onboard.v3',
     favs:     'kompass.favs.v1',
     linkPref: 'kompass.linkPref',
     checklist:'kompass.checklist.v2',
     tab:      'kompass.tab',
-    group:    'kompass.group'
+    group:    'kompass.group',
+    health:   'kompass.health.v1'
   };
   const LS = {
     get(k, f) { try { const v = localStorage.getItem(k); return v == null ? f : JSON.parse(v); } catch { return f; } },
@@ -30,7 +31,8 @@
     linkPref:    LS.get(LS_KEYS.linkPref, 'auto'),
     checks:      LS.get(LS_KEYS.checklist, {}),
     activeGroup: LS.get(LS_KEYS.group, 'karriere'),
-    searchQ:     ''
+    searchQ:     '',
+    health:      LS.get(LS_KEYS.health, { reports: [], profile: {} })
   };
 
   const isMobile = () => /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -128,7 +130,22 @@
     chart:      '<path d="M3 3v18h18M7 14l4-4 4 4 5-5"/>',
     filter:     '<path d="M22 3H2l8 9.5V19l4 2v-8.5L22 3z"/>',
     radio:      '<circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4M7.8 16.2a6 6 0 0 1 0-8.4M19 5a10 10 0 0 1 0 14M5 19a10 10 0 0 1 0-14"/>',
-    quote:      '<path d="M3 21c3 0 7-1 7-8V5c0-1-1-2-2-2H4c-1 0-2 1-2 2v6c0 1 1 2 2 2h3c0 3-1 5-4 5v3zM14 21c3 0 7-1 7-8V5c0-1-1-2-2-2h-4c-1 0-2 1-2 2v6c0 1 1 2 2 2h3c0 3-1 5-4 5v3z"/>'
+    quote:      '<path d="M3 21c3 0 7-1 7-8V5c0-1-1-2-2-2H4c-1 0-2 1-2 2v6c0 1 1 2 2 2h3c0 3-1 5-4 5v3zM14 21c3 0 7-1 7-8V5c0-1-1-2-2-2h-4c-1 0-2 1-2 2v6c0 1 1 2 2 2h3c0 3-1 5-4 5v3z"/>',
+
+    // Health
+    upload:     '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',
+    fileDoc:    '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/>',
+    activity:   '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+    droplet:    '<path d="M12 2.7s6 5.5 6 11.3A6 6 0 0 1 6 14c0-5.8 6-11.3 6-11.3z"/>',
+    pulse:      '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+    shield:     '<path d="M12 2 3 6v6c0 5 4 9 9 10 5-1 9-5 9-10V6z"/>',
+    warnTri:    '<path d="M10.3 3.9 1.9 18a2 2 0 0 0 1.7 3h16.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/>',
+    checkCircle:'<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+    brain:      '<path d="M9.5 2a3.5 3.5 0 0 0-3.5 3.5v.5a3 3 0 0 0-3 3 3 3 0 0 0 1 2.2A3 3 0 0 0 3 14a3 3 0 0 0 3 3 3.5 3.5 0 0 0 3.5 3.5 3 3 0 0 0 3-3V5a3 3 0 0 0-3-3zm5 0a3 3 0 0 0-3 3v12.5a3 3 0 0 0 3 3 3.5 3.5 0 0 0 3.5-3.5 3 3 0 0 0 3-3 3 3 0 0 0-1-2.2 3 3 0 0 0 1-2.3 3 3 0 0 0-3-3v-.5A3.5 3.5 0 0 0 14.5 2z"/>',
+    trendUp:    '<path d="m3 17 6-6 4 4 8-8M14 7h7v7"/>',
+    trendDn:    '<path d="m3 7 6 6 4-4 8 8M14 17h7v-7"/>',
+    edit:       '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4z"/>',
+    save:       '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/>'
   };
 
   function iconHTML(name, extraClass) {
@@ -159,6 +176,7 @@
 
   /* Group icon mapping */
   const GROUP_ICON = {
+    gesundheit:  'heart',
     identitaet:  'user',
     karriere:    'trending',
     pm:          'package',
@@ -224,7 +242,7 @@
     document.querySelectorAll('.tab-icon[data-icon]').forEach(el => {
       const name = el.getAttribute('data-icon');
       el.innerHTML = '';
-      const iconMap = { home: 'home', layers: 'layers', search: 'search', settings: 'settings' };
+      const iconMap = { home: 'home', layers: 'layers', search: 'search', settings: 'settings', heart: 'heart' };
       const svg = ICONS[iconMap[name] || name];
       if (svg) el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${svg}</svg>`;
     });
@@ -265,49 +283,65 @@
 
     // Hero --------------------------------------------------------------
     const hero = h('div', { class: 'hero' }, []);
+    const greeting = (() => {
+      const hh = new Date().getHours();
+      if (hh < 11) return 'Guten Morgen';
+      if (hh < 17) return 'Guten Tag';
+      if (hh < 22) return 'Guten Abend';
+      return 'Gute Nacht';
+    })();
     hero.innerHTML = `
-      <div class="hero-dots"><span class="on"></span><span></span><span></span><span></span></div>
       <div class="hero-eyebrow">
-        <span class="eb-left">${iconHTML('user')} № 01 — Identität</span>
-        <span class="eb-right">${tagLabel} ${iconHTML('dot')}</span>
+        <span class="eb-left">${iconHTML('compass')} ${esc(greeting)}</span>
+        <span class="eb-right">${esc(tagLabel)} ${iconHTML('dot')}</span>
       </div>
       <h1 class="hero-display">
-        <span class="cut">Systemischer</span>
-        <span class="cut"><em>Generalist.</em></span>
+        <span class="cut">Dein</span>
+        <span class="cut"><em>Kompass.</em></span>
       </h1>
       <div class="hero-sub">
-        <div class="hero-sub-num">05</div>
-        <div class="hero-sub-text">Kern-Merkmale, die zusammen einen Hebel ergeben — nicht Breite als Ziel, Struktur als Universal-Schlüssel.</div>
+        <div class="hero-sub-text" style="max-width:none;">Profil, Karriere, Gesundheit — alles an einem Ort. Unten tippen für Details.</div>
       </div>
     `;
     el.append(hero);
 
     // Stats band --------------------------------------------------------
     const next30 = phaseProgress('30');
+    const hScore = healthScore(latestValues());
+    const reports = (state.health?.reports || []).length;
     const stats = h('div', { class: 'stats' }, []);
     stats.innerHTML = `
       <div class="stat accent">
-        <div class="stat-head"><span class="ibadge" style="width:26px;height:26px;">${iconHTML('checkSq')}</span></div>
+        <div class="stat-head"><span class="ibadge" style="width:28px;height:28px;">${iconHTML('checkSq')}</span></div>
         <div class="stat-num">${next30.done}<span class="unit">/${next30.total}</span></div>
         <div class="stat-label">${iconHTML('calendar')} 30-Tage-Plan</div>
       </div>
       <div class="stat">
-        <div class="stat-head"><span class="ibadge" style="width:26px;height:26px;">${iconHTML('star')}</span></div>
-        <div class="stat-num">${state.favs.length}</div>
-        <div class="stat-label">${iconHTML('heart')} Favoriten</div>
+        <div class="stat-head"><span class="ibadge" style="width:28px;height:28px;">${iconHTML('heart')}</span></div>
+        <div class="stat-num">${hScore != null ? hScore : '—'}${hScore != null ? '<span class="unit">%</span>' : ''}</div>
+        <div class="stat-label">${iconHTML('activity')} Gesundheits-Score</div>
       </div>
       <div class="stat">
-        <div class="stat-head"><span class="ibadge" style="width:26px;height:26px;">${iconHTML('trending')}</span></div>
-        <div class="stat-num">${D.karrierepfade.length}</div>
-        <div class="stat-label">${iconHTML('compass')} Karriere-Pfade</div>
+        <div class="stat-head"><span class="ibadge" style="width:28px;height:28px;">${iconHTML('fileDoc')}</span></div>
+        <div class="stat-num">${reports}</div>
+        <div class="stat-label">${iconHTML('upload')} Befunde gespeichert</div>
       </div>
       <div class="stat ink">
-        <div class="stat-head"><span class="ibadge" style="width:26px;height:26px;">${iconHTML('grid')}</span></div>
-        <div class="stat-num">${D.apps.length}</div>
-        <div class="stat-label">${iconHTML('zap')} Tools im Stack</div>
+        <div class="stat-head"><span class="ibadge" style="width:28px;height:28px;">${iconHTML('star')}</span></div>
+        <div class="stat-num">${state.favs.length}</div>
+        <div class="stat-label">${iconHTML('starFilled')} Favoriten</div>
       </div>
     `;
     el.append(stats);
+
+    // Quick actions
+    const qa = h('div', { class: 'health-actions', style: { paddingTop: '16px' } }, []);
+    const qaHealth = h('button', { class: 'pill accent', onclick: () => setTab('gesundheit') }, []);
+    qaHealth.innerHTML = `${iconHTML('upload')} Befund hochladen`;
+    const qaPlan = h('button', { class: 'pill ghost', onclick: () => { state.activeGroup = 'plan'; LS.set(LS_KEYS.group,'plan'); setTab('module'); } }, []);
+    qaPlan.innerHTML = `${iconHTML('checkSq')} Plan öffnen`;
+    qa.append(qaHealth, qaPlan);
+    el.append(qa);
 
     // Motor band --------------------------------------------------------
     const motor = h('div', { class: 'band' }, []);
@@ -391,6 +425,7 @@
 
     // Module-Index -----------------------------------------------------
     const groups = [
+      { id: 'gesundheit',  label: 'Gesundheit',   sub: 'Labor · Werte · KI-Analyse', tab: 'gesundheit' },
       { id: 'identitaet',  label: 'Identität',    sub: 'Motor · Werte · Menschen' },
       { id: 'karriere',    label: 'Karriere',     sub: '9 Pfade mit Passung' },
       { id: 'pm',          label: 'Produktmgmt',  sub: 'Deep-Dive · APM · Gehalt' },
@@ -411,7 +446,10 @@
       </div>
     `;
     const ql = h('div', { class: 'ledger' }, groups.map((g, i) => {
-      const row = h('div', { class: 'row has-icon', onclick: () => { state.activeGroup = g.id; LS.set(LS_KEYS.group, g.id); setTab('module'); } }, []);
+      const row = h('div', { class: 'row has-icon', onclick: () => {
+        if (g.tab) { setTab(g.tab); return; }
+        state.activeGroup = g.id; LS.set(LS_KEYS.group, g.id); setTab('module');
+      } }, []);
       row.innerHTML = `
         <div class="row-icon">${iconHTML(GROUP_ICON[g.id] || 'dot')}</div>
         <div class="row-body">
@@ -1357,6 +1395,375 @@
   }
 
   /* ==========================================================================
+     GESUNDHEIT — Upload, Parse, Analyse, Historie
+     ========================================================================== */
+  function parseLabText(text) {
+    const out = {};
+    const t = ' ' + text.toLowerCase().replace(/[,]/g, '.') + ' ';
+    const bp = t.match(/(?:blutdruck|\brr\b|systolisch)[^0-9]{0,20}(\d{2,3})\s*\/\s*(\d{2,3})/);
+    if (bp) out.blutdruck = { sys: +bp[1], dia: +bp[2] };
+    D.gesundheit.markers.forEach(m => {
+      if (m.custom === 'bp') return;
+      for (const kw of m.keywords) {
+        const re = new RegExp(kw + '[^0-9\\-]{0,25}(-?\\d+\\.?\\d*)', 'i');
+        const mt = t.match(re);
+        if (mt) { out[m.id] = parseFloat(mt[1]); break; }
+      }
+    });
+    return out;
+  }
+
+  function markerStatus(m, v) {
+    if (v == null) return 'none';
+    if (m.reversed) return v < m.lo ? 'warn' : 'ok';
+    if (v < m.lo) return 'warn';
+    if (v > m.hi) return m.id === 'crp' || m.id === 'hba1c' || m.id === 'ldl' ? 'bad' : 'warn';
+    return 'ok';
+  }
+
+  function generateInsights(values) {
+    const I = [];
+    const v = values;
+    if ((v.ferritin != null && v.ferritin < 30) || (v.haemoglobin != null && v.haemoglobin < 12) || (v.eisen != null && v.eisen < 50)) {
+      I.push({ lvl: 'warn', icon: 'droplet', title: 'Eisenmangel-Verdacht', text: 'Ferritin, Hämoglobin oder Serum-Eisen niedrig. Mit Arzt besprechen — ggf. Substitution.' });
+    }
+    if (v.blutdruck && (v.blutdruck.sys >= 140 || v.blutdruck.dia >= 90)) {
+      I.push({ lvl: 'bad', icon: 'pulse', title: 'Bluthochdruck', text: `Werte ${v.blutdruck.sys}/${v.blutdruck.dia} mmHg liegen im hypertonen Bereich. Kontrolle + Lebensstil prüfen.` });
+    } else if (v.blutdruck && v.blutdruck.sys < 120 && v.blutdruck.dia < 80) {
+      I.push({ lvl: 'ok', icon: 'checkCircle', title: 'Blutdruck optimal', text: `${v.blutdruck.sys}/${v.blutdruck.dia} mmHg liegt im Optimalbereich.` });
+    }
+    if (v.vitaminD != null && v.vitaminD < 30) {
+      I.push({ lvl: 'warn', icon: 'sun', title: 'Vitamin-D-Mangel', text: 'Unter 30 ng/mL. Besonders im Winter verbreitet — Supplement oft sinnvoll.' });
+    }
+    if (v.vitaminB12 != null && v.vitaminB12 < 200) {
+      I.push({ lvl: 'warn', icon: 'sparkles', title: 'Vitamin-B12-Mangel', text: 'Typisch bei vegetarischer/veganer Ernährung. Müdigkeit und Konzentrationsprobleme möglich.' });
+    }
+    if (v.hba1c != null && v.hba1c >= 5.7) {
+      I.push({ lvl: v.hba1c >= 6.5 ? 'bad' : 'warn', icon: 'chart', title: v.hba1c >= 6.5 ? 'Diabetes-Bereich' : 'Prädiabetes', text: `HbA1c bei ${v.hba1c} %. Kohlenhydrate + Bewegung im Blick behalten.` });
+    }
+    if (v.ldl != null && v.ldl > 160) {
+      I.push({ lvl: 'bad', icon: 'trending', title: 'LDL stark erhöht', text: `LDL ${v.ldl} mg/dL. Kardiovaskuläres Risiko — Ernährung, Bewegung, ggf. Medikation.` });
+    } else if (v.ldl != null && v.ldl > 130) {
+      I.push({ lvl: 'warn', icon: 'trending', title: 'LDL leicht erhöht', text: `LDL ${v.ldl} mg/dL über Norm. Ernährung anpassen.` });
+    }
+    if (v.tsh != null && (v.tsh < 0.4 || v.tsh > 4.0)) {
+      I.push({ lvl: 'warn', icon: 'shield', title: v.tsh > 4.0 ? 'Schilddrüsen-Unterfunktion möglich' : 'Schilddrüsen-Überfunktion möglich', text: `TSH bei ${v.tsh} mU/L — fT3/fT4 zusätzlich prüfen lassen.` });
+    }
+    if (v.crp != null && v.crp > 5) {
+      I.push({ lvl: 'warn', icon: 'flame', title: 'Erhöhte Entzündung (CRP)', text: `CRP ${v.crp} mg/L. Akute Infektion/Entzündung — Ursache klären.` });
+    }
+    if (v.gpt != null && v.gpt > 45 || v.ggt != null && v.ggt > 60) {
+      I.push({ lvl: 'warn', icon: 'flame', title: 'Leberwerte erhöht', text: 'GPT oder Gamma-GT über Norm. Alkohol, Medikamente, Fettleber als Ursachen möglich.' });
+    }
+    if (v.kreatinin != null && v.kreatinin > 1.3) {
+      I.push({ lvl: 'warn', icon: 'droplet', title: 'Nierenwerte auffällig', text: `Kreatinin ${v.kreatinin} mg/dL. Nierenfunktion prüfen lassen.` });
+    }
+    if (!I.length && Object.keys(v).length) {
+      I.push({ lvl: 'ok', icon: 'checkCircle', title: 'Keine Auffälligkeiten', text: 'Alle erkannten Werte liegen im normalen Bereich. Weiter so.' });
+    }
+    return I;
+  }
+
+  function healthScore(values) {
+    const ms = D.gesundheit.markers.filter(m => m.custom !== 'bp');
+    let total = 0, ok = 0;
+    ms.forEach(m => {
+      const v = values[m.id];
+      if (v == null) return;
+      total++;
+      if (markerStatus(m, v) === 'ok') ok++;
+    });
+    if (values.blutdruck) {
+      total++;
+      if (values.blutdruck.sys < 140 && values.blutdruck.dia < 90 && values.blutdruck.sys >= 90) ok++;
+    }
+    return total === 0 ? null : Math.round((ok / total) * 100);
+  }
+
+  function saveReport(report) {
+    state.health.reports = [report, ...(state.health.reports || [])].slice(0, 50);
+    LS.set(LS_KEYS.health, state.health);
+  }
+
+  function latestValues() {
+    const reports = state.health.reports || [];
+    const merged = {};
+    for (let i = reports.length - 1; i >= 0; i--) {
+      Object.assign(merged, reports[i].values || {});
+    }
+    return merged;
+  }
+
+  function renderGesundheit() {
+    const el = document.getElementById('screen-gesundheit');
+    if (!el) return;
+    el.innerHTML = '';
+    el.append(mast('Gesundheit', 'Labor & Werte', { leftIcon: 'heart', rightIcon: 'activity' }));
+
+    const hero = h('div', { class: 'hero' }, []);
+    hero.innerHTML = `
+      <div class="hero-eyebrow">
+        <span class="eb-left">${iconHTML('heart')} Dein Gesundheits-Kompass</span>
+        <span class="eb-right">${(state.health.reports||[]).length} Befunde</span>
+      </div>
+      <h1 class="hero-display"><span class="cut">Befund</span><span class="cut"><em>lesen.</em></span></h1>
+      <div class="hero-sub">
+        <div class="hero-sub-text" style="max-width:none;">${esc(D.gesundheit.intro)}</div>
+      </div>
+    `;
+    el.append(hero);
+
+    // Score ring
+    const values = latestValues();
+    const score = healthScore(values);
+    if (score != null) {
+      const ring = h('div', { class: 'score-ring' }, []);
+      const col = score >= 80 ? 'var(--ok)' : score >= 60 ? 'var(--warn)' : 'var(--bad)';
+      const c = 2 * Math.PI * 42;
+      ring.innerHTML = `
+        <div class="ring">
+          <svg width="96" height="96">
+            <circle cx="48" cy="48" r="42" stroke="var(--bg-3)" stroke-width="8" fill="none"/>
+            <circle cx="48" cy="48" r="42" stroke="${col}" stroke-width="8" fill="none" stroke-linecap="round"
+              stroke-dasharray="${c}" stroke-dashoffset="${c - (score/100)*c}"/>
+          </svg>
+          <div style="text-align:center; z-index:1;">
+            <div class="ring-val" style="color:${col};">${score}</div>
+            <div class="ring-sub">Score</div>
+          </div>
+        </div>
+        <div class="score-body">
+          <div class="score-title">${score >= 80 ? 'Stark' : score >= 60 ? 'Solide' : 'Beobachten'}</div>
+          <div class="score-text">${score >= 80 ? 'Deine Werte sehen rundum gut aus.' : score >= 60 ? 'Ein paar Werte im gelben Bereich — dranbleiben.' : 'Mehrere Werte außerhalb der Norm — mit Arzt besprechen.'}</div>
+        </div>
+      `;
+      el.append(ring);
+    }
+
+    // Upload zone
+    const upz = h('label', { class: 'upload-zone', html: `
+      <div class="uz-icon">${iconHTML('upload')}</div>
+      <div class="uz-title">Befund hochladen</div>
+      <div class="uz-sub">Laborbericht, Arztbrief oder Foto — wir erkennen Werte automatisch.</div>
+      <input type="file" accept=".txt,.csv,.pdf,image/*" id="health-file" />
+    ` }, []);
+    el.append(upz);
+    upz.querySelector('input').addEventListener('change', async (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const text = String(ev.target.result || '');
+        const values = parseLabText(text);
+        const found = Object.keys(values).length;
+        const r = { ts: Date.now(), name: f.name, values, raw: text.slice(0, 5000) };
+        if (found > 0) {
+          saveReport(r);
+          renderGesundheit();
+          alert(`${found} Werte erkannt und gespeichert.`);
+        } else {
+          if (confirm('Keine Werte automatisch erkannt. Manuell eintragen?')) showManual();
+        }
+      };
+      reader.readAsText(f);
+    });
+
+    // Paste box
+    const pb = h('div', { class: 'paste-box' }, []);
+    pb.innerHTML = `
+      <textarea id="paste-area" placeholder="Oder: Werte hier einfügen — z. B.&#10;Hämoglobin 11.2 g/dL&#10;Ferritin 18 ng/mL&#10;Blutdruck 138/92 mmHg&#10;Vitamin D 22 ng/mL"></textarea>
+      <div class="paste-foot">
+        <span class="paste-hint">${iconHTML('sparkles')} KI-Erkennung läuft lokal</span>
+        <button class="pill accent" id="paste-analyze">${iconHTML('sparkles')} Analysieren</button>
+      </div>
+    `;
+    el.append(pb);
+    pb.querySelector('#paste-analyze').addEventListener('click', () => {
+      const ta = pb.querySelector('#paste-area');
+      const text = ta.value.trim();
+      if (!text) { ta.focus(); return; }
+      const values = parseLabText(text);
+      const found = Object.keys(values).length;
+      if (found === 0) {
+        if (confirm('Keine Werte erkannt. Manuell eintragen?')) showManual();
+        return;
+      }
+      saveReport({ ts: Date.now(), name: 'Eingabe ' + new Date().toLocaleDateString('de-DE'), values, raw: text.slice(0, 5000) });
+      ta.value = '';
+      renderGesundheit();
+    });
+
+    // Actions row
+    const ha = h('div', { class: 'health-actions' }, []);
+    const mb = h('button', { class: 'pill ghost' }, []);
+    mb.innerHTML = `${iconHTML('edit')} Manuell eintragen`;
+    mb.onclick = showManual;
+    const cb = h('button', { class: 'pill ghost' }, []);
+    cb.innerHTML = `${iconHTML('trash')} Historie löschen`;
+    cb.onclick = () => {
+      if (!confirm('Alle Befunde löschen?')) return;
+      state.health = { reports: [], profile: {} };
+      LS.set(LS_KEYS.health, state.health);
+      renderGesundheit();
+    };
+    ha.append(mb, cb);
+    el.append(ha);
+
+    // Insights
+    const insights = generateInsights(values);
+    if (insights.length) {
+      const ib = h('div', { class: 'band' }, []);
+      ib.innerHTML = `
+        <div class="band-head">
+          <div class="band-head-l"><span class="ibadge soft">${iconHTML('sparkles')}</span><span class="kicker">KI-Analyse</span></div>
+          <span class="count">${String(insights.length).padStart(2,'0')}</span>
+        </div>
+      `;
+      insights.forEach(i => {
+        const c = h('div', { class: 'insight ' + i.lvl }, []);
+        c.innerHTML = `
+          <div class="insight-icon">${iconHTML(i.icon)}</div>
+          <div><div class="insight-title">${esc(i.title)}</div><div class="insight-text">${esc(i.text)}</div></div>
+        `;
+        ib.append(c);
+      });
+      el.append(ib);
+    }
+
+    // Marker grid by group
+    if (Object.keys(values).length) {
+      const groups = {};
+      D.gesundheit.markers.forEach(m => { (groups[m.group] ||= []).push(m); });
+      Object.entries(groups).forEach(([grp, ms]) => {
+        const has = ms.some(m => m.custom === 'bp' ? values.blutdruck : values[m.id] != null);
+        if (!has) return;
+        const b = h('div', { class: 'band' }, []);
+        b.innerHTML = `
+          <div class="band-head">
+            <div class="band-head-l"><span class="ibadge">${iconHTML('activity')}</span><span class="kicker">${esc(grp)}</span></div>
+          </div>
+        `;
+        const grid = h('div', { class: 'marker-grid' }, []);
+        ms.forEach(m => {
+          if (m.custom === 'bp') {
+            if (!values.blutdruck) return;
+            const bp = values.blutdruck;
+            const st = (bp.sys >= 140 || bp.dia >= 90) ? 'bad' : (bp.sys >= 130 || bp.dia >= 85) ? 'warn' : 'ok';
+            const card = h('div', { class: 'marker ' + st }, []);
+            card.innerHTML = `
+              <div class="marker-label">${esc(m.label)}</div>
+              <div class="marker-val">${bp.sys}/${bp.dia}<span class="unit">${esc(m.unit)}</span></div>
+              <div class="marker-ref">Norm &lt; 130/85</div>
+              <div class="marker-status ${st}">${st === 'ok' ? 'Optimal' : st === 'warn' ? 'Grenzwertig' : 'Hyperton'}</div>
+            `;
+            grid.append(card);
+            return;
+          }
+          const v = values[m.id];
+          if (v == null) return;
+          const st = markerStatus(m, v);
+          const card = h('div', { class: 'marker ' + st }, []);
+          card.innerHTML = `
+            <div class="marker-label">${esc(m.label)}</div>
+            <div class="marker-val">${v}<span class="unit">${esc(m.unit)}</span></div>
+            <div class="marker-ref">Norm ${m.lo}–${m.hi} ${esc(m.unit)}</div>
+            <div class="marker-status ${st}">${st === 'ok' ? 'Normal' : st === 'warn' ? (v < m.lo ? 'Niedrig' : 'Erhöht') : 'Auffällig'}</div>
+          `;
+          grid.append(card);
+        });
+        b.append(grid);
+        el.append(b);
+      });
+    }
+
+    // History
+    const reports = state.health.reports || [];
+    if (reports.length) {
+      const hb = h('div', { class: 'band' }, []);
+      hb.innerHTML = `
+        <div class="band-head">
+          <div class="band-head-l"><span class="ibadge">${iconHTML('fileDoc')}</span><span class="kicker">Historie</span></div>
+          <span class="count">${String(reports.length).padStart(2,'0')}</span>
+        </div>
+      `;
+      const led = h('div', { class: 'ledger' }, reports.map((r, i) => {
+        const row = h('div', { class: 'report-row' }, []);
+        const date = new Date(r.ts).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        row.innerHTML = `
+          <div class="row-icon">${iconHTML('fileDoc')}</div>
+          <div>
+            <div class="row-title">${esc(r.name || 'Befund ' + (i+1))}</div>
+            <div class="row-sub">${Object.keys(r.values||{}).length} Werte · ${date}</div>
+          </div>
+          <div class="report-date">${date}</div>
+        `;
+        row.onclick = () => {
+          if (confirm(`Befund „${r.name}" löschen?`)) {
+            state.health.reports.splice(i, 1);
+            LS.set(LS_KEYS.health, state.health);
+            renderGesundheit();
+          }
+        };
+        return row;
+      }));
+      hb.append(led);
+      el.append(hb);
+    }
+
+    el.append(h('div', { class: 'spacer' }));
+
+    function showManual() {
+      const existing = latestValues();
+      const overlay = h('div', { class: 'onboard', style: { display: 'flex' } }, []);
+      const head = h('div', { class: 'onboard-head' }, []);
+      head.innerHTML = `
+        <div class="onboard-brand">${iconHTML('heart')} GESUNDHEIT</div>
+        <button class="onboard-step" id="m-close">${iconHTML('x')} Schließen</button>
+      `;
+      const q = h('div', { class: 'onboard-q', style: { fontSize: '28px' } }, []);
+      q.innerHTML = 'Werte <em>eintragen</em>';
+      const qs = h('div', { class: 'onboard-qsub' }, 'Nur Felder ausfüllen, die du hast. Rest leer lassen.');
+      const form = h('div', { class: 'form-grid', style: { padding: '4px 0' } }, []);
+      const fields = D.gesundheit.markers.filter(m => m.custom !== 'bp').slice(0, 16);
+      const bpF = h('div', { class: 'field full' }, []);
+      bpF.innerHTML = `<label>Blutdruck (sys / dia mmHg)</label>
+        <div style="display:flex; gap:8px;">
+          <input id="m-sys" type="number" placeholder="Sys" value="${existing.blutdruck?.sys || ''}" />
+          <input id="m-dia" type="number" placeholder="Dia" value="${existing.blutdruck?.dia || ''}" />
+        </div>`;
+      form.append(bpF);
+      fields.forEach(m => {
+        const f = h('div', { class: 'field' }, []);
+        f.innerHTML = `<label>${esc(m.label)} (${esc(m.unit)})</label>
+          <input type="number" step="any" id="m-${m.id}" value="${existing[m.id] != null ? existing[m.id] : ''}" placeholder="—" />`;
+        form.append(f);
+      });
+      const foot = h('div', { class: 'onboard-footer' }, []);
+      const save = h('button', { class: 'btn-big' }, []);
+      save.innerHTML = `${iconHTML('save')} Speichern`;
+      foot.append(save);
+      const scroll = h('div', { class: 'onboard-opts' }, [form]);
+      overlay.append(head, q, qs, scroll, foot);
+      document.body.append(overlay);
+      head.querySelector('#m-close').onclick = () => overlay.remove();
+      save.onclick = () => {
+        const vals = {};
+        const sys = +overlay.querySelector('#m-sys').value;
+        const dia = +overlay.querySelector('#m-dia').value;
+        if (sys && dia) vals.blutdruck = { sys, dia };
+        fields.forEach(m => {
+          const v = overlay.querySelector('#m-' + m.id).value;
+          if (v !== '') vals[m.id] = parseFloat(v);
+        });
+        if (Object.keys(vals).length === 0) { overlay.remove(); return; }
+        saveReport({ ts: Date.now(), name: 'Manuell ' + new Date().toLocaleDateString('de-DE'), values: vals, raw: '' });
+        overlay.remove();
+        renderGesundheit();
+      };
+    }
+  }
+
+  /* ==========================================================================
      SETTINGS
      ========================================================================== */
   function renderSettings() {
@@ -1520,7 +1927,7 @@
   function applyTheme() {
     document.documentElement.setAttribute('data-theme', state.theme);
     const mc = document.querySelector('meta[name="theme-color"]');
-    if (mc) mc.setAttribute('content', state.theme === 'dark' ? '#0A0906' : '#EFEAE1');
+    if (mc) mc.setAttribute('content', state.theme === 'dark' ? '#0A0A0C' : '#F6F6F8');
   }
 
   /* ==========================================================================
@@ -1528,59 +1935,73 @@
      ========================================================================== */
   const questions = [
     {
-      kicker: 'Frage 01 / 05',
-      q: 'Was <em>treibt</em> dich gerade am meisten?',
-      sub: 'Kein Entweder-Oder — wähle, was aktuell am lautesten ist.',
+      kicker: 'Frage 01 / 06',
+      q: 'Was ist gerade dein <em>wichtigstes Thema</em>?',
+      sub: 'Nicht alles gleichzeitig — was hat diese Woche oberste Priorität?',
       opts: [
-        { key: 'build',    title: 'Etwas <em>bauen.</em>',     sub: 'Projekt, Produkt, Business',  icon: 'package' },
-        { key: 'learn',    title: 'Etwas <em>verstehen.</em>', sub: 'Neues Feld, tiefe Skills',    icon: 'book' },
-        { key: 'connect',  title: 'Menschen <em>erreichen.</em>', sub: 'Kunden, Community, Netzwerk', icon: 'share' },
-        { key: 'clarify',  title: 'Richtung <em>finden.</em>', sub: 'Optionen sortieren',          icon: 'compass' }
+        { key: 'build',    title: 'Projekt oder Produkt <em>bauen</em>', sub: 'Business, SaaS, Content, Launch', icon: 'package' },
+        { key: 'learn',    title: 'Tiefes Wissen <em>aufbauen</em>',      sub: 'Neues Fach, Skill, Zertifikat',   icon: 'book' },
+        { key: 'connect',  title: 'Kunden oder Netzwerk <em>gewinnen</em>', sub: 'Sales, Content, Community',    icon: 'share' },
+        { key: 'clarify',  title: 'Richtung <em>klären</em>',             sub: 'Optionen sortieren, entscheiden', icon: 'compass' },
+        { key: 'health',   title: 'Gesundheit <em>stabilisieren</em>',    sub: 'Schlaf, Energie, Werte',          icon: 'heart' }
       ],
       key: 'driver'
     },
     {
-      kicker: 'Frage 02 / 05',
-      q: 'Wie <em>denkst</em> du am liebsten?',
-      sub: 'Wie verarbeitest du Informationen — nicht was du gerade tust.',
+      kicker: 'Frage 02 / 06',
+      q: 'Wie <em>verarbeitest</em> du neue Informationen am besten?',
+      sub: 'Nicht was du tust — wie dein Kopf Dinge am schnellsten aufnimmt.',
       opts: [
-        { key: 'systems', title: 'In <em>Systemen.</em>',   sub: 'Zusammenhänge, Muster',     icon: 'network' },
-        { key: 'stories', title: 'In <em>Geschichten.</em>', sub: 'Menschen, Szenen, Motive', icon: 'book' },
-        { key: 'numbers', title: 'In <em>Zahlen.</em>',     sub: 'Daten, Wahrscheinlichkeit', icon: 'chart' },
-        { key: 'visual',  title: 'In <em>Bildern.</em>',    sub: 'Proportion, Komposition',   icon: 'palette' }
+        { key: 'systems', title: 'In <em>Systemen</em> und Zusammenhängen', sub: 'Ich erkenne Muster und Mechanik', icon: 'network' },
+        { key: 'stories', title: 'In <em>Geschichten</em> und Beispielen',   sub: 'Ich merke mir Szenen und Personen', icon: 'book' },
+        { key: 'numbers', title: 'In <em>Zahlen</em> und Daten',             sub: 'Ich vertraue Metriken und Messung',  icon: 'chart' },
+        { key: 'visual',  title: 'In <em>Bildern</em> und Diagrammen',       sub: 'Ich denke räumlich und visuell',     icon: 'palette' }
       ],
       key: 'thinking'
     },
     {
-      kicker: 'Frage 03 / 05',
-      q: 'Was <em>bremst</em> dich?',
-      sub: 'Ehrlich — was passiert immer wieder?',
+      kicker: 'Frage 03 / 06',
+      q: 'Was <em>bremst</em> dich am häufigsten?',
+      sub: 'Ehrlich — welches Muster wiederholt sich bei dir?',
       opts: [
-        { key: 'breadth', title: 'Zu <em>viele</em> Baustellen', sub: 'Fokus verliert sich',       icon: 'layers' },
-        { key: 'depth',   title: 'Zu <em>wenig</em> Tiefe',      sub: 'Immer bei 50% Stopp',       icon: 'target' },
-        { key: 'output',  title: 'Zu <em>wenig</em> im Raum',    sub: 'Gute Arbeit, keiner sieht sie', icon: 'eye' },
-        { key: 'nothing', title: 'Nichts, <em>läuft.</em>',      sub: 'Momentum ist da',           icon: 'flame' }
+        { key: 'breadth', title: 'Zu <em>viele</em> Baustellen parallel',   sub: 'Fokus zerfasert, nichts wird fertig', icon: 'layers' },
+        { key: 'depth',   title: 'Zu <em>wenig Tiefe</em> bei einer Sache', sub: 'Ich höre oft bei 60 % auf',            icon: 'target' },
+        { key: 'output',  title: 'Zu <em>wenig öffentlich</em> sichtbar',   sub: 'Gute Arbeit, die keiner sieht',        icon: 'eye' },
+        { key: 'energy',  title: 'Zu <em>wenig Energie</em> / Schlaf',      sub: 'Körper bremst den Kopf aus',           icon: 'droplet' },
+        { key: 'nothing', title: 'Nichts — <em>läuft gut</em>',             sub: 'Momentum ist da',                      icon: 'flame' }
       ],
       key: 'block'
     },
     {
-      kicker: 'Frage 04 / 05',
-      q: 'Wie sollen <em>Links</em> öffnen?',
-      sub: 'Technik-Voreinstellung.',
+      kicker: 'Frage 04 / 06',
+      q: 'Wie geht es dir <em>körperlich</em> gerade?',
+      sub: 'Grobe Einschätzung. Beeinflusst Home-Dashboard und Gesundheits-Tab.',
       opts: [
-        { key: 'auto', title: '<em>Auto</em>',        sub: 'Device-basiert entscheiden', icon: 'radio' },
-        { key: 'web',  title: 'Immer <em>Web</em>',   sub: 'Browser-Tab',                icon: 'desktop' },
-        { key: 'app',  title: 'Immer <em>App</em>',   sub: 'Wo verfügbar, native',       icon: 'phone' }
+        { key: 'strong',  title: '<em>Stark</em> — volle Energie',         sub: 'Schlaf, Sport, Werte im grünen Bereich', icon: 'flame' },
+        { key: 'solid',   title: '<em>Solide</em> — kleine Baustellen',    sub: 'Ein, zwei Dinge im Blick halten',        icon: 'activity' },
+        { key: 'tired',   title: '<em>Müde</em> — brauche Regeneration',   sub: 'Schlaf, Erholung, Basics priorisieren',  icon: 'droplet' },
+        { key: 'flagged', title: '<em>Auffällige</em> Werte im Befund',    sub: 'z. B. Eisen, Vitamin D, Blutdruck',      icon: 'warnTri' }
+      ],
+      key: 'bodyState'
+    },
+    {
+      kicker: 'Frage 05 / 06',
+      q: 'Wie sollen <em>Links</em> öffnen?',
+      sub: 'Technik-Voreinstellung — jederzeit änderbar.',
+      opts: [
+        { key: 'auto', title: '<em>Automatisch</em>',        sub: 'Mobile → App, Desktop → Web', icon: 'radio' },
+        { key: 'web',  title: 'Immer im <em>Browser</em>',   sub: 'Neuer Tab, nie App-Scheme',   icon: 'desktop' },
+        { key: 'app',  title: 'Immer in der <em>App</em>',   sub: 'Wo verfügbar, native App',    icon: 'phone' }
       ],
       key: 'linkPref'
     },
     {
-      kicker: 'Frage 05 / 05',
+      kicker: 'Frage 06 / 06',
       q: '<em>Dunkel</em> oder hell?',
       sub: 'Darstellung. Jederzeit umschaltbar.',
       opts: [
-        { key: 'light', title: '<em>Papier.</em>', sub: 'Beige / Off-White', icon: 'sun' },
-        { key: 'dark',  title: '<em>Nacht.</em>',  sub: 'Schwarz-Basis',      icon: 'moon' }
+        { key: 'light', title: '<em>Hell</em> — Tagmodus',    sub: 'Heller Hintergrund, dunkler Text', icon: 'sun' },
+        { key: 'dark',  title: '<em>Dunkel</em> — Nachtmodus', sub: 'Schwarzer Hintergrund, Augenschonend', icon: 'moon' }
       ],
       key: 'theme'
     }
@@ -1674,6 +2095,7 @@
   function renderAll() {
     renderHome();
     renderModule();
+    renderGesundheit();
     renderSearch();
     renderSettings();
   }

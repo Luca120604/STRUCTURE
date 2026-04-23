@@ -1,7 +1,7 @@
 /* Kompass Service Worker — cache-first strategy.
    Bump CACHE_VERSION on deploy to invalidate old assets. */
 
-const CACHE_VERSION = 'kompass-v3-1';
+const CACHE_VERSION = 'kompass-v4-sapphire';
 const ASSETS = [
   './',
   './index.html',
